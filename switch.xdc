@@ -8,8 +8,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports {SWITCHES[1]}]
 set_property PACKAGE_PIN W13 [get_ports {SWITCHES[2]}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {SWITCHES[2]}]
 
-set_property PACKAGE_PIN T16 [get_ports {SWITCHES}]; 
-set_property IOSTANDARD LVCMOS33 [get_ports {SWITCHES}]
+set_property PACKAGE_PIN T16 [get_ports {SWITCHES[3]}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {SWITCHES[3]}]
+
 
 ##LEDs
 
@@ -23,5 +24,5 @@ set_property IOSTANDARD LVCMOS33 [get_ports {LEDS[1]}]
 set_property PACKAGE_PIN G14 [get_ports {LEDS[2]}];    
 set_property IOSTANDARD LVCMOS33 [get_ports {LEDS[2]}]
 
-set_property PACKAGE_PIN D18 [get_ports {LEDS}];    
-set_property IOSTANDARD LVCMOS33 [get_ports {LEDS}]
+set_property PACKAGE_PIN D18 [get_ports {LEDS[3]}];    
+set_property IOSTANDARD LVCMOS33 [get_ports {LEDS[3]}]
