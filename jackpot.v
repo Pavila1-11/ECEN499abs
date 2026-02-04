@@ -1,3 +1,4 @@
+
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
@@ -9,7 +10,11 @@
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
-// Description: 
+// Description: Jackpot game for ECEN 449 Lab 1
+//              LEDs cycle one at a time (one-hot).
+//              If the matching switch is ON when its LED is lit,
+//              all LEDs turn on (JACKPOT) for one slow tick, then
+//              the sequence restarts.
 // 
 // Dependencies: 
 // 
@@ -19,49 +24,56 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
-module jackpot(
-
- 
- input  CLOCK,        // K17: 125MHz onboard  
-    input  [3:0] SWITCHES,  // G15,P15,W13,T16: DIP 0-3
-    output reg [3:0] LEDS    // M14,M15,G14,D18: LEDs 0-3
+module jackpot (
+    input        CLOCK,        // 125 MHz system clock
+    input  [3:0] SWITCHES,     // DIP switches 0-3
+    output reg [3:0] LEDS      // LEDs 0-3
 );
 
-    reg [21:0] slow_count = 0;  // Clock divider
-    reg [1:0] led_index = 0;    // Which LED (0,1,2,3)
-    reg win_mode = 0;           // Jackpot flag
+    // 25-bit divider for a clearly visible speed
+    reg [24:0] div_counter = 0;
 
+    // Index of the currently lit LED (0..3)
+    reg [1:0] led_index = 0;
+
+    // Jackpot flag: when 1, show all LEDs for one slow tick
+    reg       jackpot_state = 0;
+
+    // Clock divider: count up on every 125 MHz clock edge
     always @(posedge CLOCK) begin
-        slow_count <= slow_count + 1;
-        
-        // === CLOCK DIVIDER: 125MHz → ~5Hz (visible but fast) ===
-        if (slow_count == 22'd25_000_000) begin
-            slow_count <= 0;
-            
-            if (win_mode) begin
-                // Auto-reset jackpot after 1 cycle
-                win_mode <= 0;
-                led_index <= 0;
-                LEDS <= 4'b0001;
+        div_counter <= div_counter + 1;
+    end
+
+    // Use a high bit of div_counter as a slow clock.
+    // Bit 24 is slower than 23; you can adjust if needed.
+    wire slow_clk;
+    assign slow_clk = div_counter[24];
+
+    // Main game logic, driven by the slow clock
+    always @(posedge slow_clk) begin
+        if (jackpot_state) begin
+            // JACKPOT: all LEDs on for one slow tick
+            LEDS          <= 4'b1111;
+            jackpot_state <= 1'b0;    // clear jackpot
+            led_index     <= 2'b00;   // restart sequence at LED0
+        end else begin
+            // One-hot LED pattern based on led_index
+            case (led_index)
+                2'b00: LEDS <= 4'b0001;  // LED0
+                2'b01: LEDS <= 4'b0010;  // LED1
+                2'b10: LEDS <= 4'b0100;  // LED2
+                2'b11: LEDS <= 4'b1000;  // LED3
+            endcase
+
+            // Win if matching switch is ON when its LED is lit
+            if (SWITCHES[led_index]) begin
+                jackpot_state <= 1'b1;   // enter jackpot on next tick
             end else begin
-                // === CYCLE LEDs (ONE-HOT) ===
-                case (led_index)
-                    2'b00: LEDS <= 4'b0001;  // LED0
-                    2'b01: LEDS <= 4'b0010;  // LED1
-                    2'b10: LEDS <= 4'b0100;  // LED2  
-                    2'b11: LEDS <= 4'b1000;  // LED3
-                endcase
-                
-                // === WIN CHECK: Switch matches current LED? ===
-                if (SWITCHES[led_index]) begin
-                    win_mode <= 1;
-                    LEDS <= 4'b1111;     // JACKPOT!
-                end else begin
-                    led_index <= led_index + 1;  // Next LED
-                end
+                // Otherwise advance to the next LED
+                led_index <= led_index + 1'b1;
             end
         end
     end
 
 endmodule
+
